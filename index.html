@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project EMP</title>
+<style>
+body {
+  background: #0a0f1a;
+  color: #00eaff;
+  font-family: monospace;
+  text-align: center;
+  padding: 20px;
+}
+h1 { font-size: 24px; }
+button {
+  background: transparent;
+  border: 1px solid #00eaff;
+  color: #00eaff;
+  padding: 12px;
+  margin: 6px;
+  width: 95%;
+}
+.done { background: rgba(0,234,255,0.2); }
+.progress {
+  height: 12px;
+  background: #111;
+  margin: 12px 0;
+}
+.bar {
+  height: 12px;
+  background: #00eaff;
+  width: 0%;
+}
+</style>
+</head>
+<body>
+
+<h1>⚡ PROJECT EMP</h1>
+
+<div>Level: <span id="level">1</span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<div>XP: <span id="xp">0</span>/100</div>
+
+<button onclick="xpAdd(this)">Train</button>
+<button onclick="xpAdd(this)">Protein</button>
+<button onclick="xpAdd(this)">Calories</button>
+<button onclick="xpAdd(this)">Steps</button>
+<button onclick="xpAdd(this)">Mobility</button>
+
+<button onclick="xpAdd(this)">Run</button>
+<button onclick="xpAdd(this)">Plyo</button>
+<button onclick="xpAdd(this)">Stretch</button>
+<button onclick="xpAdd(this)">Sleep</button>
+
+<script>
+let xp = localStorage.getItem("xp") || 0;
+let level = localStorage.getItem("level") || 1;
+
+updateUI();
+
+function xpAdd(btn){
+  if(btn.classList.contains("done")) return;
+
+  xp = parseInt(xp) + 10;
+  btn.classList.add("done");
+
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  let audio = new Audio("https://www.soundjay.com/button/beep-07.wav");
+  audio.play();
+
+  if(xp >= 100){
+    xp = 0;
+    level++;
+  }
+
+  localStorage.setItem("xp", xp);
+  localStorage.setItem("level", level);
+
+  updateUI();
+}
+
+function updateUI(){
+  document.getElementById("xp").innerText = xp;
+  document.getElementById("level").innerText = level;
+  document.getElementById("bar").style.width = xp + "%";
+}
+</script>
+
+</body>
+</html>

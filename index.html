@@ -1,33 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project EMP</title>
 
 <style>
 body {
-  background: #0a0f1a;
-  color: #00eaff;
-  font-family: monospace;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: black;
+  color: #00ffcc;
   padding: 15px;
 }
-h1 { text-align:center; }
-.card {
-  border: 1px solid #00eaff;
-  padding: 10px;
-  margin: 10px 0;
+
+h1 {
+  text-align: center;
 }
+
+.card {
+  border: 1px solid #00ffcc;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
 input, button {
   width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  background: black;
-  color: #00eaff;
-  border: 1px solid #00eaff;
+  padding: 10px;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: none;
 }
-.bar {
+
+button {
+  background: #00ffcc;
+  color: black;
+  font-weight: bold;
+}
+
+.progress {
   height: 10px;
-  background: #00eaff;
+  background: #222;
+  border-radius: 5px;
+  margin-top: 5px;
+}
+
+.progress-bar {
+  height: 10px;
+  background: #00ffcc;
+  border-radius: 5px;
   width: 0%;
 }
 </style>
@@ -35,138 +58,172 @@ input, button {
 
 <body>
 
-<h1>⚡ PROJECT EMP</h1>
+<h1>⚡ Project EMP</h1>
 
-<div>Level: <span id="level">1</span></div>
-<div class="bar" id="bar"></div>
-<div>XP: <span id="xp">0</span>/100</div>
-
-<!-- SLEEP -->
 <div class="card">
-<h3>😴 Sleep</h3>
-<input type="time" id="sleepStart">
-<input type="time" id="sleepEnd">
-<button onclick="logSleep()">Log Sleep</button>
-<div id="sleepResult"></div>
+<h3>XP Level System</h3>
+<p>Level: <span id="level">1</span></p>
+<p>XP: <span id="xp">0</span>/100</p>
+<div class="progress"><div id="xpBar" class="progress-bar"></div></div>
 </div>
 
-<!-- NUTRITION -->
 <div class="card">
-<h3>🍽️ Nutrition</h3>
-<input placeholder="Meal" id="meal">
-<input type="number" placeholder="Calories" id="calories">
-<function addMeal(){
-  const nameInput = document.getElementById("meal");
-  const calInput = document.getElementById("calories");
+<h3>😴 Sleep</h3>
+<input type="time" id="sleepTime">
+<input type="time" id="wakeTime">
+<button onclick="saveSleep()">Save Sleep</button>
+<p id="sleepResult"></p>
+</div>
 
-  const name = nameInput.value.trim();
-  const cal = Number(calInput.value);
-
-  if(name === "" || isNaN(cal) || cal <= 0){
-    alert("Enter a valid meal and calories");
-    return;
-  }
-
-  // Ensure meals array exists
-  if(!data.meals){
-    data.meals = [];
-  }
-
-  data.meals.push({ name: name, cal: cal });
-
-  // Clear inputs
-  nameInput.value = "";
-  calInput.value = "";
-
-  save();
-  updateUI();
-}
-<!-- TRAIN -->
 <div class="card">
-<h3>🏋️ Training</h3>
-<button onclick="addXP(20)">Workout Done (+20 XP)</button>
+<h3>🍽️ Meals</h3>
+<input placeholder="Meal name" id="meal">
+<input placeholder="Calories" id="calories" type="number">
+<button onclick="addMeal()">Add Meal</button>
+<p id="mealList">No meals logged</p>
+</div>
+
+<div class="card">
+<h3>🏃 Run</h3>
+<input placeholder="Miles" id="miles" type="number">
+<input placeholder="Minutes" id="minutes" type="number">
+<button onclick="logRun()">Log Run</button>
+<p id="runResult"></p>
+</div>
+
+<div class="card">
+<h3>🏋️ Workout</h3>
+<button onclick="logWorkout()">Mark Workout Complete</button>
+<p id="workoutStatus">Not done</p>
+</div>
+
+<div class="card">
+<h3>📅 History</h3>
+<p id="history"></p>
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem("empData")) || {
-  xp:0, level:1, meals:[], history:[]
+  xp: 0,
+  level: 1,
+  meals: [],
+  history: [],
+  lastDate: new Date().toDateString()
 };
 
-function save(){ localStorage.setItem("empData", JSON.stringify(data)); }
-
-function updateUI(){
-  document.getElementById("xp").innerText = data.xp;
-  document.getElementById("level").innerText = data.level;
-  document.getElementById("bar").style.width = data.xp + "%";
-
-  let total = data.meals.reduce((a,b)=>a+b.cal,0);
-  document.getElementById("totalCal").innerText = total;
-
-  document.getElementById("mealList").innerHTML =
-    data.meals.map(m=>`${m.name} - ${m.cal} cal`).join("<br>");
+function save(){
+  localStorage.setItem("empData", JSON.stringify(data));
 }
 
-function addXP(amount){
-  data.xp += amount;
-  if (navigator.vibrate) navigator.vibrate(50);
-
-  if(data.xp >= 100){
-    data.xp = 0;
-    data.level++;
-  }
-  save(); updateUI();
-}
-
-function logSleep(){
-  let s = document.getElementById("sleepStart").value;
-  let e = document.getElementById("sleepEnd").value;
-
-  let start = new Date(`2020-01-01 ${s}`);
-  let end = new Date(`2020-01-01 ${e}`);
-  if(end < start) end.setDate(end.getDate()+1);
-
-  let hours = ((end-start)/1000/60/60).toFixed(1);
-
-  document.getElementById("sleepResult").innerText =
-    `Slept ${hours} hrs`;
-
-  if(hours >= 7) addXP(10);
-}
-
-function addMeal(){
-  let name = document.getElementById("meal").value;
-  let cal = parseInt(document.getElementById("calories").value);
-
-  if(!name || !cal) return;
-
-  data.meals.push({name, cal});
-  addXP(5);
-  save(); updateUI();
-}
-
-function logRun(){
-  let miles = parseFloat(document.getElementById("miles").value);
-  let minutes = parseFloat(document.getElementById("minutes").value);
-
-  let pace = (minutes/miles).toFixed(2);
-
-  document.getElementById("runResult").innerText =
-    `Pace: ${pace} min/mile`;
-
-  addXP(15);
-}
-
-function dailyReset(){
+function checkNewDay(){
   let today = new Date().toDateString();
   if(data.lastDate !== today){
-    data.history.push({...data});
+    data.history.push({
+      date: data.lastDate,
+      meals: data.meals
+    });
     data.meals = [];
     data.lastDate = today;
     save();
   }
 }
 
-dailyReset();
+function addXP(amount){
+  data.xp += amount;
+  if(data.xp >= 100){
+    data.xp -= 100;
+    data.level++;
+  }
+}
+
+function updateUI(){
+  document.getElementById("xp").innerText = data.xp;
+  document.getElementById("level").innerText = data.level;
+  document.getElementById("xpBar").style.width = data.xp + "%";
+
+  // Meals
+  const mealList = document.getElementById("mealList");
+  if(data.meals.length > 0){
+    mealList.innerHTML = data.meals.map(m => `${m.name} - ${m.cal} cal`).join("<br>");
+  } else {
+    mealList.innerHTML = "No meals logged";
+  }
+
+  // History
+  document.getElementById("history").innerHTML =
+    data.history.map(h => `${h.date} (${h.meals.length} meals)`).join("<br>");
+}
+
+function addMeal(){
+  const name = document.getElementById("meal").value.trim();
+  const cal = Number(document.getElementById("calories").value);
+
+  if(name === "" || isNaN(cal) || cal <= 0){
+    alert("Enter valid meal and calories");
+    return;
+  }
+
+  data.meals.push({name, cal});
+
+  document.getElementById("meal").value = "";
+  document.getElementById("calories").value = "";
+
+  addXP(5);
+  save();
+  updateUI();
+}
+
+function logRun(){
+  const miles = Number(document.getElementById("miles").value);
+  const minutes = Number(document.getElementById("minutes").value);
+
+  if(isNaN(miles) || isNaN(minutes) || miles <= 0 || minutes <= 0){
+    alert("Enter valid run data");
+    return;
+  }
+
+  let pace = (minutes / miles).toFixed(2);
+
+  document.getElementById("runResult").innerText =
+    `Pace: ${pace} min/mile`;
+
+  addXP(15);
+  save();
+  updateUI();
+}
+
+function logWorkout(){
+  document.getElementById("workoutStatus").innerText = "Completed ✅";
+  addXP(10);
+  save();
+  updateUI();
+}
+
+function saveSleep(){
+  let sleep = document.getElementById("sleepTime").value;
+  let wake = document.getElementById("wakeTime").value;
+
+  if(!sleep || !wake){
+    alert("Enter sleep times");
+    return;
+  }
+
+  let sleepDate = new Date(`1970-01-01T${sleep}`);
+  let wakeDate = new Date(`1970-01-01T${wake}`);
+
+  let diff = (wakeDate - sleepDate) / (1000 * 60 * 60);
+  if(diff < 0) diff += 24;
+
+  document.getElementById("sleepResult").innerText =
+    `Slept ${diff.toFixed(1)} hours`;
+
+  addXP(10);
+  save();
+  updateUI();
+}
+
+// Init
+checkNewDay();
 updateUI();
 </script>
 

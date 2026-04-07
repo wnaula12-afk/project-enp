@@ -3,88 +3,159 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Project EMP</title>
+
 <style>
 body {
   background: #0a0f1a;
   color: #00eaff;
   font-family: monospace;
-  text-align: center;
-  padding: 20px;
+  padding: 15px;
 }
-h1 { font-size: 24px; }
-button {
-  background: transparent;
+h1 { text-align:center; }
+.card {
   border: 1px solid #00eaff;
-  color: #00eaff;
-  padding: 12px;
-  margin: 6px;
-  width: 95%;
+  padding: 10px;
+  margin: 10px 0;
 }
-.done { background: rgba(0,234,255,0.2); }
-.progress {
-  height: 12px;
-  background: #111;
-  margin: 12px 0;
+input, button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  background: black;
+  color: #00eaff;
+  border: 1px solid #00eaff;
 }
 .bar {
-  height: 12px;
+  height: 10px;
   background: #00eaff;
   width: 0%;
 }
 </style>
 </head>
+
 <body>
 
 <h1>⚡ PROJECT EMP</h1>
 
 <div>Level: <span id="level">1</span></div>
-<div class="progress"><div class="bar" id="bar"></div></div>
+<div class="bar" id="bar"></div>
 <div>XP: <span id="xp">0</span>/100</div>
 
-<button onclick="xpAdd(this)">Train</button>
-<button onclick="xpAdd(this)">Protein</button>
-<button onclick="xpAdd(this)">Calories</button>
-<button onclick="xpAdd(this)">Steps</button>
-<button onclick="xpAdd(this)">Mobility</button>
+<!-- SLEEP -->
+<div class="card">
+<h3>😴 Sleep</h3>
+<input type="time" id="sleepStart">
+<input type="time" id="sleepEnd">
+<button onclick="logSleep()">Log Sleep</button>
+<div id="sleepResult"></div>
+</div>
 
-<button onclick="xpAdd(this)">Run</button>
-<button onclick="xpAdd(this)">Plyo</button>
-<button onclick="xpAdd(this)">Stretch</button>
-<button onclick="xpAdd(this)">Sleep</button>
+<!-- NUTRITION -->
+<div class="card">
+<h3>🍽️ Nutrition</h3>
+<input placeholder="Meal" id="meal">
+<input type="number" placeholder="Calories" id="calories">
+<button onclick="addMeal()">Add Meal</button>
+<div id="mealList"></div>
+<div>Total Calories: <span id="totalCal">0</span></div>
+</div>
+
+<!-- RUN -->
+<div class="card">
+<h3>🏃 Run</h3>
+<input type="number" placeholder="Miles" id="miles">
+<input type="number" placeholder="Minutes" id="minutes">
+<button onclick="logRun()">Log Run</button>
+<div id="runResult"></div>
+</div>
+
+<!-- TRAIN -->
+<div class="card">
+<h3>🏋️ Training</h3>
+<button onclick="addXP(20)">Workout Done (+20 XP)</button>
+</div>
 
 <script>
-let xp = localStorage.getItem("xp") || 0;
-let level = localStorage.getItem("level") || 1;
+let data = JSON.parse(localStorage.getItem("empData")) || {
+  xp:0, level:1, meals:[], history:[]
+};
 
-updateUI();
-
-function xpAdd(btn){
-  if(btn.classList.contains("done")) return;
-
-  xp = parseInt(xp) + 10;
-  btn.classList.add("done");
-
-  if (navigator.vibrate) navigator.vibrate(50);
-
-  let audio = new Audio("https://www.soundjay.com/button/beep-07.wav");
-  audio.play();
-
-  if(xp >= 100){
-    xp = 0;
-    level++;
-  }
-
-  localStorage.setItem("xp", xp);
-  localStorage.setItem("level", level);
-
-  updateUI();
-}
+function save(){ localStorage.setItem("empData", JSON.stringify(data)); }
 
 function updateUI(){
-  document.getElementById("xp").innerText = xp;
-  document.getElementById("level").innerText = level;
-  document.getElementById("bar").style.width = xp + "%";
+  document.getElementById("xp").innerText = data.xp;
+  document.getElementById("level").innerText = data.level;
+  document.getElementById("bar").style.width = data.xp + "%";
+
+  let total = data.meals.reduce((a,b)=>a+b.cal,0);
+  document.getElementById("totalCal").innerText = total;
+
+  document.getElementById("mealList").innerHTML =
+    data.meals.map(m=>`${m.name} - ${m.cal} cal`).join("<br>");
 }
+
+function addXP(amount){
+  data.xp += amount;
+  if (navigator.vibrate) navigator.vibrate(50);
+
+  if(data.xp >= 100){
+    data.xp = 0;
+    data.level++;
+  }
+  save(); updateUI();
+}
+
+function logSleep(){
+  let s = document.getElementById("sleepStart").value;
+  let e = document.getElementById("sleepEnd").value;
+
+  let start = new Date(`2020-01-01 ${s}`);
+  let end = new Date(`2020-01-01 ${e}`);
+  if(end < start) end.setDate(end.getDate()+1);
+
+  let hours = ((end-start)/1000/60/60).toFixed(1);
+
+  document.getElementById("sleepResult").innerText =
+    `Slept ${hours} hrs`;
+
+  if(hours >= 7) addXP(10);
+}
+
+function addMeal(){
+  let name = document.getElementById("meal").value;
+  let cal = parseInt(document.getElementById("calories").value);
+
+  if(!name || !cal) return;
+
+  data.meals.push({name, cal});
+  addXP(5);
+  save(); updateUI();
+}
+
+function logRun(){
+  let miles = parseFloat(document.getElementById("miles").value);
+  let minutes = parseFloat(document.getElementById("minutes").value);
+
+  let pace = (minutes/miles).toFixed(2);
+
+  document.getElementById("runResult").innerText =
+    `Pace: ${pace} min/mile`;
+
+  addXP(15);
+}
+
+function dailyReset(){
+  let today = new Date().toDateString();
+  if(data.lastDate !== today){
+    data.history.push({...data});
+    data.meals = [];
+    data.lastDate = today;
+    save();
+  }
+}
+
+dailyReset();
+updateUI();
 </script>
 
 </body>

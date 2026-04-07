@@ -55,37 +55,32 @@ input, button {
 <h3>🍽️ Nutrition</h3>
 <input placeholder="Meal" id="meal">
 <input type="number" placeholder="Calories" id="calories">
-function addMeal(){
-  let name = document.getElementById("meal").value.trim();
-  let calInput = document.getElementById("calories").value;
+<button onclick="function addMeal(){
+  const nameInput = document.getElementById("meal");
+  const calInput = document.getElementById("calories");
 
-  let cal = Number(calInput);
+  const name = nameInput.value.trim();
+  const cal = Number(calInput.value);
 
-  // Validation (THIS FIXES YOUR ISSUE)
-  if(!name || !cal || cal <= 0){
+  if(name === "" || isNaN(cal) || cal <= 0){
     alert("Enter a valid meal and calories");
     return;
   }
 
-  data.meals.push({name, cal});
+  // Ensure meals array exists
+  if(!data.meals){
+    data.meals = [];
+  }
 
-  // Clear inputs (nice UX upgrade)
-  document.getElementById("meal").value = "";
-  document.getElementById("calories").value = "";
+  data.meals.push({ name: name, cal: cal });
 
-  addXP(5);
+  // Clear inputs
+  nameInput.value = "";
+  calInput.value = "";
+
   save();
   updateUI();
 }
-
-<!-- RUN -->
-<div class="card">
-<h3>🏃 Run</h3>
-<input type="number" placeholder="Miles" id="miles">
-<input type="number" placeholder="Minutes" id="minutes">
-<button onclick="logRun()">Log Run</button>
-<div id="runResult"></div>
-</div>
 
 <!-- TRAIN -->
 <div class="card">

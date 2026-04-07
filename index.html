@@ -3,62 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Project EMP</title>
-
+<title>Project EMP v3</title>
 <style>
 body {
-  margin: 0;
+  margin:0;
   font-family: Arial, sans-serif;
-  background: black;
-  color: #00ffcc;
-  padding: 15px;
+  background:#0a0f1a;
+  color:#00ffcc;
+  padding:15px;
 }
-
-h1 {
-  text-align: center;
+h1{text-align:center;}
+.card{
+  border:1px solid #00ffcc;
+  border-radius:12px;
+  padding:15px;
+  margin-bottom:15px;
 }
-
-.card {
-  border: 1px solid #00ffcc;
-  border-radius: 12px;
-  padding: 15px;
-  margin-bottom: 15px;
+input, button{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border-radius:8px;
+  border:none;
 }
-
-input, button {
-  width: 100%;
-  padding: 10px;
-  margin-top: 5px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  border: none;
+button{
+  background:#00ffcc;
+  color:black;
+  font-weight:bold;
 }
-
-button {
-  background: #00ffcc;
-  color: black;
-  font-weight: bold;
-}
-
-.progress {
-  height: 10px;
-  background: #222;
-  border-radius: 5px;
-  margin-top: 5px;
-}
-
-.progress-bar {
-  height: 10px;
-  background: #00ffcc;
-  border-radius: 5px;
-  width: 0%;
-}
+.progress{height:10px; background:#222; border-radius:5px; margin-top:5px;}
+.progress-bar{height:10px; background:#00ffcc; border-radius:5px; width:0%;}
 </style>
 </head>
-
 <body>
 
-<h1>⚡ Project EMP</h1>
+<h1>⚡ Project EMP v3</h1>
 
 <div class="card">
 <h3>XP Level System</h3>
@@ -81,6 +60,7 @@ button {
 <input placeholder="Calories" id="calories" type="number">
 <button onclick="addMeal()">Add Meal</button>
 <p id="mealList">No meals logged</p>
+<p>Total Calories: <span id="totalCal">0</span></p>
 </div>
 
 <div class="card">
@@ -99,35 +79,61 @@ button {
 
 <div class="card">
 <h3>📅 History</h3>
-<p id="history"></p>
+<p id="history">No history yet</p>
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem("empData")) || {
-  xp: 0,
-  level: 1,
-  meals: [],
-  history: [],
-  lastDate: new Date().toDateString()
+  xp:0,
+  level:1,
+  meals:[],
+  history:[],
+  lastDate:new Date().toDateString()
 };
 
-function save(){
-  localStorage.setItem("empData", JSON.stringify(data));
-}
-
+// Daily reset & history push
 function checkNewDay(){
   let today = new Date().toDateString();
   if(data.lastDate !== today){
-    data.history.push({
-      date: data.lastDate,
-      meals: data.meals
-    });
+    if(data.meals.length > 0){
+      data.history.push({
+        date:data.lastDate,
+        meals:[...data.meals]
+      });
+    }
     data.meals = [];
     data.lastDate = today;
     save();
   }
 }
 
+// Save to localStorage
+function save(){ localStorage.setItem("empData", JSON.stringify(data)); }
+
+// Update UI
+function updateUI(){
+  document.getElementById("xp").innerText = data.xp;
+  document.getElementById("level").innerText = data.level;
+  document.getElementById("xpBar").style.width = data.xp+"%";
+
+  // Meals
+  const mealList = document.getElementById("mealList");
+  if(data.meals.length>0){
+    mealList.innerHTML = data.meals.map(m=>`${m.name} - ${m.cal} cal`).join("<br>");
+  } else mealList.innerHTML = "No meals logged";
+
+  // Total calories
+  const total = data.meals.reduce((a,b)=>a+b.cal,0);
+  document.getElementById("totalCal").innerText = total;
+
+  // History
+  const history = document.getElementById("history");
+  if(data.history.length>0){
+    history.innerHTML = data.history.map(h=>`${h.date}: ${h.meals.length} meals`).join("<br>");
+  } else history.innerHTML = "No history yet";
+}
+
+// Add XP
 function addXP(amount){
   data.xp += amount;
   if(data.xp >= 100){
@@ -136,24 +142,7 @@ function addXP(amount){
   }
 }
 
-function updateUI(){
-  document.getElementById("xp").innerText = data.xp;
-  document.getElementById("level").innerText = data.level;
-  document.getElementById("xpBar").style.width = data.xp + "%";
-
-  // Meals
-  const mealList = document.getElementById("mealList");
-  if(data.meals.length > 0){
-    mealList.innerHTML = data.meals.map(m => `${m.name} - ${m.cal} cal`).join("<br>");
-  } else {
-    mealList.innerHTML = "No meals logged";
-  }
-
-  // History
-  document.getElementById("history").innerHTML =
-    data.history.map(h => `${h.date} (${h.meals.length} meals)`).join("<br>");
-}
-
+// Add Meal
 function addMeal(){
   const name = document.getElementById("meal").value.trim();
   const cal = Number(document.getElementById("calories").value);
@@ -173,25 +162,25 @@ function addMeal(){
   updateUI();
 }
 
+// Log run
 function logRun(){
   const miles = Number(document.getElementById("miles").value);
   const minutes = Number(document.getElementById("minutes").value);
 
-  if(isNaN(miles) || isNaN(minutes) || miles <= 0 || minutes <= 0){
+  if(isNaN(miles) || isNaN(minutes) || miles<=0 || minutes<=0){
     alert("Enter valid run data");
     return;
   }
 
-  let pace = (minutes / miles).toFixed(2);
-
-  document.getElementById("runResult").innerText =
-    `Pace: ${pace} min/mile`;
+  const pace = (minutes/miles).toFixed(2);
+  document.getElementById("runResult").innerText = `Pace: ${pace} min/mile`;
 
   addXP(15);
   save();
   updateUI();
 }
 
+// Log workout
 function logWorkout(){
   document.getElementById("workoutStatus").innerText = "Completed ✅";
   addXP(10);
@@ -199,9 +188,10 @@ function logWorkout(){
   updateUI();
 }
 
+// Save sleep
 function saveSleep(){
-  let sleep = document.getElementById("sleepTime").value;
-  let wake = document.getElementById("wakeTime").value;
+  const sleep = document.getElementById("sleepTime").value;
+  const wake = document.getElementById("wakeTime").value;
 
   if(!sleep || !wake){
     alert("Enter sleep times");
@@ -210,12 +200,10 @@ function saveSleep(){
 
   let sleepDate = new Date(`1970-01-01T${sleep}`);
   let wakeDate = new Date(`1970-01-01T${wake}`);
+  let hours = (wakeDate - sleepDate)/(1000*60*60);
+  if(hours<0) hours+=24;
 
-  let diff = (wakeDate - sleepDate) / (1000 * 60 * 60);
-  if(diff < 0) diff += 24;
-
-  document.getElementById("sleepResult").innerText =
-    `Slept ${diff.toFixed(1)} hours`;
+  document.getElementById("sleepResult").innerText = `Slept ${hours.toFixed(1)} hours`;
 
   addXP(10);
   save();

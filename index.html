@@ -55,10 +55,28 @@ input, button {
 <h3>🍽️ Nutrition</h3>
 <input placeholder="Meal" id="meal">
 <input type="number" placeholder="Calories" id="calories">
-<button onclick="addMeal()">Add Meal</button>
-<div id="mealList"></div>
-<div>Total Calories: <span id="totalCal">0</span></div>
-</div>
+function addMeal(){
+  let name = document.getElementById("meal").value.trim();
+  let calInput = document.getElementById("calories").value;
+
+  let cal = Number(calInput);
+
+  // Validation (THIS FIXES YOUR ISSUE)
+  if(!name || !cal || cal <= 0){
+    alert("Enter a valid meal and calories");
+    return;
+  }
+
+  data.meals.push({name, cal});
+
+  // Clear inputs (nice UX upgrade)
+  document.getElementById("meal").value = "";
+  document.getElementById("calories").value = "";
+
+  addXP(5);
+  save();
+  updateUI();
+}
 
 <!-- RUN -->
 <div class="card">
